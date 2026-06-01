@@ -5,6 +5,8 @@ LAMMPS `ML-GNNP` driver. Each folder is self-contained with a smoke-test input,
 structure file and environment notes so the setups can be reproduced or used as
 starting points for future projects.
 
+This public version contains interface setups, input decks and documentation. It does not include large model weights, private training data or production trajectory outputs.
+
 ## Directory layout
 
 - `builds/` - CMake recipes and Conda environment snippets for the specialised LAMMPS binaries.
