@@ -1,0 +1,8 @@
+name: mlff_fairchem
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - fairchem-core==1.3.0
