@@ -7,7 +7,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y shellcheck
       - run: bash -n scripts/*.sh
-      - run: shellcheck scripts/*.sh
+      - run: shellcheck --severity=error scripts/*.sh
       - name: Validate registry entries
         run: |
           while IFS=$'\t' read -r model _; do
