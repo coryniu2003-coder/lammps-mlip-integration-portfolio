@@ -1,24 +1,10 @@
-# MatGL (M3GNet)
+# MatGL / M3GNet integration
 
-MatGL's pretrained M3GNet PES accessed via ML-GNNP.
-
-## Prerequisites
-
-- LAMMPS binary linked against the `mlff_matgl_sevenn` environment.
-- Python packages: `matgl==1.3.0`, `torch==2.1.0+cu121`, `dgl==2.1.0`, `sevenn==0.11.2.post1` (SevenNet shares the same environment).
-
-## Run
+This example loads the pretrained `M3GNet-MP-2021.2.8-PES` potential.
 
 ```bash
-lmp_binary=/path/to/build-mlff_matgl_sevenn/lmp_mlff_matgl_sevenn
-gnnp_root=/path/to/lammps/src/ML-GNNP
-
-conda run -n mlff_matgl_sevenn $lmp_binary -var gnnp_root $gnnp_root -in run_short.in
+bash scripts/doctor.sh --model matgl
+bash scripts/run_demo.sh --model matgl
 ```
 
-Named outputs:
-
-- `log.matgl_short`
-- `xyz_short.lammpstrj`
-
-Point `pair_coeff` to another MatGL checkpoint if desired.
+The development setup used `matgl 1.3.0` in the `mlff_matgl_sevenn` environment. A 50-step Argon integration test completed successfully through the shared launcher.
