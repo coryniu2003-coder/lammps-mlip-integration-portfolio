@@ -1,0 +1,14 @@
+name: mace-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - ase>=3.23
+  - h5py
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu121
+      - torch==2.4.1
+      - torchvision==0.19.1
+      - torchaudio==2.4.1
+      - mace-torch==0.3.14
