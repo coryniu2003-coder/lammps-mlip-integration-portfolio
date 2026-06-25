@@ -19,3 +19,7 @@ build-*/
 *.zip
 *.tar
 *.tar.gz
+config.env
+runs/
+.venv/
+site/
