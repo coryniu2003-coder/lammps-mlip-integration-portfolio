@@ -1,25 +1,10 @@
-# EquiformerV2-M (eqV2-M)
+# EquiformerV2-M integration
 
-FAIR-Chem EquiformerV2 medium checkpoint driven through ML-GNNP.
-
-## Prerequisites
-
-- LAMMPS binary built against the `mlff_fairchem` Conda environment (Python executable passed to CMake; see `../../builds/README.md`).
-- `fairchem-core==1.3.0` with its Torch/torch-geometric dependencies.
-- Checkpoint `eqV2_86M_omat.pt` copied into `ML-GNNP/fairchem-omat24/` or another path referenced by `pair_coeff`.
-
-## Run
+EquiformerV2 is an equivariant transformer model distributed through FAIR-Chem. This configuration requests the medium OMat model.
 
 ```bash
-lmp_binary=/path/to/build-mlff_fairchem/lmp_mlff_fairchem
-gnnp_root=/path/to/lammps/src/ML-GNNP
-
-$lmp_binary -var gnnp_root $gnnp_root -in run_short.in
+bash scripts/doctor.sh --model eqv2m
+bash scripts/run_demo.sh --model eqv2m
 ```
 
-Outputs:
-
-- `log.eqv2m_short`
-- `xyz_short.lammpstrj`
-
-Extend the `run` length for production workloads once the smoke test passes.
+The environment starting point uses `fairchem-core 1.3.0`. This entry is labelled a **configuration example** until a clean-machine checkpoint download and full smoke test are repeated.
