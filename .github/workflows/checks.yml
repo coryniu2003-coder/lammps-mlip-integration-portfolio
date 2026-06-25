@@ -1,0 +1,24 @@
+name: Repository checks
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - run: bash -n scripts/*.sh
+      - run: shellcheck scripts/*.sh
+      - name: Validate registry entries
+        run: |
+          while IFS=$'\t' read -r model _; do
+            [[ "$model" == "id" ]] && continue
+            bash scripts/doctor.sh --model "$model" --config-only
+          done < models/registry.tsv
+      - run: bash scripts/run_demo.sh --model matgl --steps 10 --dry-run --output-dir /tmp/matgl-dry-run
+      - run: python -m py_compile scripts/summarise_run.py
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: test -s docs/index.html && test -s docs/styles.css && test -s docs/app.js
+      - run: test -f docs/favicon.svg && test -f docs/data/matgl_thermo.csv
