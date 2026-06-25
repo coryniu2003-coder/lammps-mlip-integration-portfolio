@@ -1,24 +1,10 @@
-# CHGNet (v0.3.0)
+# CHGNet integration
 
-Graph neural network potential from the Ceder Group deployed through the LAMMPS `ML-GNNP` driver.
-
-## Prerequisites
-
-- LAMMPS built with `PKG_ML-GNNP=on`, `PKG_PYTHON=on`, `PKG_OPENMP=on` (see `../../builds/README.md`).
-- Python environment with `chgnet==0.3.0` accessible to the LAMMPS binary (the base Anaconda environment works in this setup).
-
-## Run
+CHGNet is a graph neural-network potential designed for inorganic materials. This folder records the ML-GNNP configuration for CHGNet 0.3.0.
 
 ```bash
-lmp_binary=/path/to/build-cpu/lmp
-gnnp_root=/path/to/lammps/src/ML-GNNP
-
-$lmp_binary -var gnnp_root $gnnp_root -in run_short.in
+bash scripts/doctor.sh --model chgnet
+bash scripts/run_demo.sh --model chgnet
 ```
 
-Output files:
-
-- `log.chgnet_short` - thermo history.
-- `xyz_short.lammpstrj` - trajectory.
-
-Increase the `run` command inside `run_short.in` for production trajectories.
+This public entry is labelled a **configuration example** because the current portfolio rebuild has not rerun the complete CHGNet stack on a clean machine. Use `doctor.sh` to verify the selected environment and binary.
