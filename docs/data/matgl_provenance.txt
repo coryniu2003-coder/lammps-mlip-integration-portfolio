@@ -1,0 +1,11 @@
+model_id=matgl
+model_name=MatGL M3GNet
+pair_payload=matgl M3GNet-MP-2021.2.8-PES
+conda_environment=mlff_matgl_sevenn
+structure=structures/argon_fcc_4.lammps
+structure_sha256=c63ed1ebaf2c0c02f61eeb55b56bfd4e8a4bb2d43a9d9321641b3884cf9955f8
+elements=Ar
+temperature_K=300
+steps=50
+timestep_ps=5.0e-4
+created_utc=2026-06-25T11:42:37Z
