@@ -1,157 +1,118 @@
-# LAMMPS build & environment guide
+# Build and environment guide
 
-Each machine-learned potential lives in a dedicated Conda environment that is baked into the LAMMPS build via `Python_EXECUTABLE`. Keeping the environments separate avoids version conflicts between Torch/DGL variants.
+## Why this project uses separate environments
 
-All builds share the same flags:
+LAMMPS is a compiled molecular-dynamics program, while the force models in this portfolio are Python packages built on different PyTorch, CUDA, DGL and PyTorch-Geometric versions.
 
-- `-DCMAKE_C_COMPILER=mpicc`
-- `-DCMAKE_CXX_COMPILER=mpicxx`
-- `-DPKG_ML-GNNP=on -DPKG_PYTHON=on -DPKG_OPENMP=on`
-- `-DPython_EXECUTABLE=$CONDA_PREFIX/bin/python`
+The ML-GNNP integration embeds Python inside LAMMPS. The Python interpreter used when compiling a LAMMPS binary therefore matters. A binary linked to one Conda environment cannot safely be assumed to load every other model stack.
 
-From the build directory run `cmake --build . --parallel` and optionally `cmake --install .`.
+The practical solution is:
 
-> Adjust the MPI compiler wrappers if you prefer a serial build (`gcc`, `g++`). For GPU acceleration add `-DPKG_GPU=on` and rebuild after configuring CUDA.
+1. Keep incompatible model families in separate Conda environments.
+2. Build or provide a LAMMPS executable for each environment.
+3. Record the executable path in `config.env`.
+4. Run `scripts/doctor.sh` before starting a simulation.
 
-## 1. Baseline build (`build-cpu/lmp`) - CHGNet & MACE
+## Source expectation
 
-This binary is linked against the base Anaconda environment. Install the Python packages once:
+The examples target a LAMMPS source tree containing the `ML-GNNP` package with:
 
-```bash
-conda activate base
-pip install chgnet==0.3.0 mace-torch==0.3.6
+```text
+src/ML-GNNP/gnnp_driver.py
+src/ML-GNNP/pair_gnnp.cpp
+src/ML-GNNP/pair_gnnp.h
 ```
 
-Then configure and build:
+The development workstation used the `mace` branch of [`ACEsuit/lammps`](https://github.com/ACEsuit/lammps). This is a specialist integration and should not be confused with every standard LAMMPS release.
+
+## Common CMake pattern
+
+Activate the target Conda environment before configuring LAMMPS:
 
 ```bash
-mkdir -p ~/lammps/build-cpu
-cd ~/lammps/build-cpu
-cmake ../cmake \
+conda activate <environment>
+
+cmake -S /path/to/lammps/cmake -B /path/to/build \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_C_COMPILER=mpicc \
   -DCMAKE_CXX_COMPILER=mpicxx \
-  -DPKG_ML-GNNP=on -DPKG_PYTHON=on -DPKG_OPENMP=on \
-  -DPython_EXECUTABLE=$(which python)
-cmake --build . --parallel
+  -DPKG_ML-GNNP=on \
+  -DPKG_PYTHON=on \
+  -DPKG_OPENMP=on \
+  -DPython_EXECUTABLE="$CONDA_PREFIX/bin/python"
+
+cmake --build /path/to/build --parallel
 ```
 
-## 2. `mlff_matgl_sevenn` environment - MatGL & SevenNet
+The exact flags can vary with the LAMMPS branch, MPI implementation and GPU toolchain. Treat this as the reproducible pattern, not a universal binary recipe.
 
-Create the environment (CUDA 12.1 stack as used on this machine):
+## Environment starting points
 
 ```bash
-conda create -n mlff_matgl_sevenn python=3.11
-conda activate mlff_matgl_sevenn
-pip install --index-url https://download.pytorch.org/whl/cu121 torch==2.1.0 torchvision==0.16.0
-pip install dgl==2.1.0+cu121 -f https://data.dgl.ai/wheels/cu121/repo.html
-pip install matgl==1.3.0 sevenn==0.11.2.post1
+conda env create -f environments/mace.yml
+conda env create -f environments/matgl-sevennet.yml
+conda env create -f environments/mattersim-orb.yml
+conda env create -f environments/fairchem.yml
 ```
 
-Configure LAMMPS while the environment is active:
+GPU-enabled PyTorch, DGL and PyTorch-Geometric wheels must match the CUDA runtime on the target machine. Install those platform-specific wheels before treating an environment as production-ready.
+
+## Configure executable paths
 
 ```bash
-mkdir -p ~/lammps/build-mlff_matgl_sevenn
-cd ~/lammps/build-mlff_matgl_sevenn
-cmake ../cmake \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=mpicc \
-  -DCMAKE_CXX_COMPILER=mpicxx \
-  -DPKG_ML-GNNP=on -DPKG_PYTHON=on -DPKG_OPENMP=on \
-  -DPython_EXECUTABLE=$CONDA_PREFIX/bin/python
-cmake --build . --parallel
+cp .env.example config.env
 ```
 
-The resulting binary is referenced as `lmp_mlff_matgl_sevenn` in the model READMEs.
-
-## 3. `mlff_mattersim_orb` environment - MatterSim & ORB
-
-This environment carries a newer CUDA 12.8 PyTorch build:
+Example:
 
 ```bash
-conda create -n mlff_mattersim_orb python=3.11
-conda activate mlff_mattersim_orb
-pip install --index-url https://download.pytorch.org/whl/cu128 torch==2.8.0 torchvision==0.19.0
-pip install mattersim==1.2.0 orb-models==0.5.5
+LAMMPS_ROOT="$HOME/src/lammps"
+GNNP_ROOT="$LAMMPS_ROOT/src/ML-GNNP"
+MACE_LMP_BIN="$HOME/builds/lammps-mace/lmp"
+MATGL_LMP_BIN="$HOME/builds/lammps-matgl/lmp"
+SEVENNET_LMP_BIN="$HOME/builds/lammps-matgl/lmp"
+MATTERSIM_LMP_BIN="$HOME/builds/lammps-mattersim/lmp"
+ORB_LMP_BIN="$HOME/builds/lammps-mattersim/lmp"
+EQV2M_LMP_BIN="$HOME/builds/lammps-fairchem/lmp"
 ```
 
-Configure & build:
+Then check each integration:
 
 ```bash
-mkdir -p ~/lammps/build-mlff_mattersim_orb
-cd ~/lammps/build-mlff_mattersim_orb
-cmake ../cmake \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=mpicc \
-  -DCMAKE_CXX_COMPILER=mpicxx \
-  -DPKG_ML-GNNP=on -DPKG_PYTHON=on -DPKG_OPENMP=on \
-  -DPython_EXECUTABLE=$CONDA_PREFIX/bin/python
-cmake --build . --parallel
+bash scripts/doctor.sh --model mace
+bash scripts/doctor.sh --model matgl
+bash scripts/doctor.sh --model sevennet
 ```
 
-Run the resulting `lmp_mlff_mattersim_orb` under `conda run -n mlff_mattersim_orb` so the dynamic libraries resolve correctly.
+## Locally observed package versions
 
-## 4. `mlff_fairchem` environment - EquiformerV2 (eqV2-M)
+These versions document the development workstation; they are not a claim that other combinations are unsupported.
 
-FAIR-Chem relies on PyTorch Geometric; the following pip installs mirror the working setup:
+| Environment | Observed packages |
+|---|---|
+| `mace-env` | Current local binary exposed an incompatible `mace-torch 0.3.15` / `torch 2.1.2` combination; the environment file uses a compatible starting point instead |
+| `mlff_matgl_sevenn` | `matgl 1.3.0`, `sevenn 0.11.2.post1` |
+| `mlff_mattersim_orb` | `mattersim 1.2.0`, development `orb-models` |
+| `mlff_fairchem` | `fairchem-core 1.3.0` |
+
+## Troubleshooting
+
+### Python module missing
+
+The selected LAMMPS binary and the activated environment probably do not refer to the same Python installation. Run:
 
 ```bash
-conda create -n mlff_fairchem python=3.11
-conda activate mlff_fairchem
-pip install --index-url https://download.pytorch.org/whl/cu128 torch==2.8.0 torchvision==0.19.0
-pip install --find-links https://data.pyg.org/whl/torch-2.8.0+cu128.html torch-scatter torch-sparse torch-cluster torch-spline-conv
-pip install fairchem-core==1.3.0
+bash scripts/doctor.sh --model <model>
 ```
 
-Configure & build:
+### CUDA library or symbol errors
 
-```bash
-mkdir -p ~/lammps/build-mlff_fairchem
-cd ~/lammps/build-mlff_fairchem
-cmake ../cmake \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=mpicc \
-  -DCMAKE_CXX_COMPILER=mpicxx \
-  -DPKG_ML-GNNP=on -DPKG_PYTHON=on -DPKG_OPENMP=on \
-  -DPython_EXECUTABLE=$CONDA_PREFIX/bin/python
-cmake --build . --parallel
-```
+Confirm the NVIDIA driver, CUDA runtime and PyTorch wheel are compatible. Rebuild the model-specific LAMMPS binary after changing environments.
 
-Place the EquiformerV2 checkpoint under `src/ML-GNNP/fairchem-omat24/` or adjust `pair_coeff path ...`.
+### Model downloads fail
 
-## 5. `mace-env` rebuild - GPU MACE (Ar/Si/Na)
+Some pretrained models download their weights on first use. Check network access, cache permissions and the provider’s current model name.
 
-The MACE driver is compiled against a CUDA-enabled Torch build. Recreate the environment whenever you refresh the binary:
+### Simulation runs but results are implausible
 
-```bash
-conda create -n mace-env python=3.10
-conda activate mace-env
-conda install --solver classic -c conda-forge ase h5py
-conda install --solver classic libabseil=20240116.2 libprotobuf=4.25.3
-pip install --extra-index-url https://download.pytorch.org/whl/cu121 \
-  "torch==2.1.2" "torchvision==0.16.2" "torchaudio==2.1.2"
-```
-
-Then rebuild the dedicated LAMMPS binary (`~/lammps/build-mace_mliap`):
-
-```bash
-cd ~/lammps/build-mace_mliap
-cmake ../cmake \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=mpicc \
-  -DCMAKE_CXX_COMPILER=mpicxx \
-  -DCMAKE_CXX_STANDARD=17 \
-  -DPKG_ML-GNNP=on -DPKG_PYTHON=on -DPKG_OPENMP=on \
-  -DPKG_ML-IAP=on -DPKG_ML-MACE=on -DPKG_ML-SNAP=on \
-  -DPython_EXECUTABLE=$CONDA_PREFIX/bin/python \
-  -DPython_INCLUDE_DIR=$CONDA_PREFIX/include/python3.10 \
-  -DPython_LIBRARY=$CONDA_PREFIX/lib/libpython3.10.so \
-  -DMKL_INCLUDE_DIR=$CONDA_PREFIX/include \
-  -DMKL_LIBRARY=$CONDA_PREFIX/lib/libmkl_rt.so \
-  -DTorch_DIR=$CONDA_PREFIX/lib/python3.10/site-packages/torch/share/cmake/Torch
-cmake --build . --parallel
-```
-
-`model-setups/mace_mp0` and `model-setups_Na/mace_mp0` both call this binary via `build-mace_env/lmp_mace_env.sh`, so keeping the environment and build in sync ensures CUDA is available across all structures.
-
-After each build, add the binary to your `PATH` or reference it directly in the per-model instructions. Always launch the runs through `conda run -n <env>` when the linked environment is not the currently activated one.
+The integration test only proves that software executed. Validate energies, forces, structures and trajectories against trusted reference data before using the model scientifically.
