@@ -1,0 +1,8 @@
+id	display_name	conda_env	binary_env	pair_payload	python_module	status
+mace	MACE MP0	mace-env	MACE_LMP_BIN	mace medium-mpa-0	mace	configuration
+chgnet	CHGNet 0.3.0	base	CHGNET_LMP_BIN	chgnet 0.3.0	chgnet	configuration
+matgl	MatGL M3GNet	mlff_matgl_sevenn	MATGL_LMP_BIN	matgl M3GNet-MP-2021.2.8-PES	matgl	tested
+sevennet	SevenNet	mlff_matgl_sevenn	SEVENNET_LMP_BIN	sevennet 7net-0	sevenn	tested
+mattersim	MatterSim	mlff_mattersim_orb	MATTERSIM_LMP_BIN	mattersim MatterSim-v1.0.0-1M	mattersim	tested
+orb	ORB	mlff_mattersim_orb	ORB_LMP_BIN	orb orb-v2	orb_models	tested
+eqv2m	EquiformerV2-M	mlff_fairchem	EQV2M_LMP_BIN	fairchem EquiformerV2-86M-OMat	fairchem	configuration
