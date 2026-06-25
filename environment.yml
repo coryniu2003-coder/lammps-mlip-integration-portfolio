@@ -1,0 +1,9 @@
+name: lammps-mlip-portfolio
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - shellcheck
+  - pip:
+      - -r requirements.txt
